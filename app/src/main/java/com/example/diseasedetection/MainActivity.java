@@ -1,5 +1,6 @@
 package com.example.diseasedetection;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -7,14 +8,19 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.example.diseasedetection.ml.Model;
 
@@ -27,9 +33,9 @@ import java.nio.ByteOrder;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView result, confidence;
+    TextView result;
     ImageView imageView;
-    Button picture;
+    Button picture, readMore;
     int imageSize = 224;
 
     private static final int REQUEST_PERMISSION = 101;
@@ -39,9 +45,21 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         result = findViewById(R.id.result);
-        confidence = findViewById(R.id.confidence);
+        //confidence = findViewById(R.id.confidence);
         imageView = findViewById(R.id.imageView);
         picture = findViewById(R.id.button);
+        readMore = findViewById(R.id.button2);
+
+        readMore.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                if(!result.getText().toString().trim().isEmpty()){
+                    readMore.setEnabled(true);
+                    readMore.setTextColor(Color.BLACK);
+                    readMore.setBackgroundColor(Color.rgb(155,203,100));
+                }
+            }
+        });
 
         picture.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,6 +72,13 @@ public class MainActivity extends AppCompatActivity {
                     //Request camera permission if we don't have it.
                     requestPermissions(new String[]{Manifest.permission.READ_MEDIA_IMAGES},REQUEST_PERMISSION);
                 }
+            }
+        });
+
+        readMore.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(MainActivity.this, "I am enabled", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -113,12 +138,13 @@ public class MainActivity extends AppCompatActivity {
             String[] classes = {"apple black rot","apple healthy", "apple rust", "apple scab","banana cordana", "banana healthy", "banana pestalotiopsis", "banana sigatoka", "grape black rot", "grape healthy", "grape leaf blight", "guava healthy", "guava red rust", "mango anthracnose", "mango bacterial canker", "mango cutting weevil", "mango die back", "mango gall midge", "mango healthy", "mango powdery mildew", "mango sooty mould"};
 
             result.setText(classes[maxPos]);
+            /*
             StringBuilder s = new StringBuilder();
             for(int i=0; i<classes.length; i++){
                 s.append(String.format("%s: %.1f%%\n", classes[i], confidences[i] * 100));
             }
             confidence.setText(s.toString());
-
+             */
             // Releases model resources if no longer used.
             model.close();
         } catch (IOException e) {
@@ -136,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
                 int dimension = Math.min(image.getWidth(), image.getHeight());
                 image = ThumbnailUtils.extractThumbnail(image, dimension, dimension);
                 imageView.setImageBitmap(image);
-
+                imageView.setBackgroundColor(Color.BLACK);
 
                 image = Bitmap.createScaledBitmap(image, imageSize, imageSize, false);
                 classifyImage(image);
