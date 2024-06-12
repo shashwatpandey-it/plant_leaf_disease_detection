@@ -1,6 +1,5 @@
 package com.example.diseasedetection;
 
-import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,21 +11,15 @@ import android.graphics.Color;
 import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.os.Bundle;
-import android.widget.Toast;
-
-import com.example.diseasedetection.ml.Model;
-
+import com.example.diseasedetection.ml.ModelFinal;
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -55,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
             public void onGlobalLayout() {
                 if(!result.getText().toString().trim().isEmpty()){
                     readMore.setEnabled(true);
-                    readMore.setTextColor(Color.BLACK);
-                    readMore.setBackgroundColor(Color.rgb(155,203,100));
+                    readMore.setTextColor(Color.WHITE);
+                    readMore.setBackgroundColor(Color.rgb(76, 175, 80));
                 }
             }
         });
@@ -76,9 +69,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         readMore.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View view) {
-                Toast.makeText(MainActivity.this, "I am enabled", Toast.LENGTH_SHORT).show();
+                Intent webViewIntent = new Intent(MainActivity.this, WebViewActivity.class);
+                startActivity(webViewIntent);
             }
         });
     }
@@ -98,10 +93,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     public void classifyImage(Bitmap image){
         try {
-            Model model = Model.newInstance(getApplicationContext());
+            ModelFinal model = ModelFinal.newInstance(getApplicationContext());
 
             // Creates inputs for reference.
             TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 224, 224, 3}, DataType.FLOAT32);
@@ -122,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
             inputFeature0.loadBuffer(byteBuffer);
 
             // Runs model inference and gets result.
-            Model.Outputs outputs = model.process(inputFeature0);
+            ModelFinal.Outputs outputs = model.process(inputFeature0);
             TensorBuffer outputFeature0 = outputs.getOutputFeature0AsTensorBuffer();
 
             float[] confidences = outputFeature0.getFloatArray();
@@ -135,22 +129,34 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            String[] classes = {"apple black rot","apple healthy", "apple rust", "apple scab","banana cordana", "banana healthy", "banana pestalotiopsis", "banana sigatoka", "grape black rot", "grape healthy", "grape leaf blight", "guava healthy", "guava red rust", "mango anthracnose", "mango bacterial canker", "mango cutting weevil", "mango die back", "mango gall midge", "mango healthy", "mango powdery mildew", "mango sooty mould"};
+            String[] classes = {"Apple Black Rot",
+                    "Apple Healthy",
+                    "Apple Rust",
+                    "Apple Scab",
+                    "Banana Cordana",
+                    "Banana Healthy",
+                    "Banana Pestalotiopsis",
+                    "Banana Sigatoka",
+                    "Grape Black Rot",
+                    "Grape Healthy",
+                    "Grape Leaf Blight",
+                    "Guava Healthy",
+                    "Guava Red Rust",
+                    "Mango Anthracnose",
+                    "Mango Bacterial Canker",
+                    "Mango Cutting Weevil",
+                    "Mango Die Back",
+                    "Mango Gall Midge",
+                    "Mango Healthy",
+                    "Mango Powdery Mildew",
+                    "Mango Sooty Mould"};
 
             result.setText(classes[maxPos]);
-            /*
-            StringBuilder s = new StringBuilder();
-            for(int i=0; i<classes.length; i++){
-                s.append(String.format("%s: %.1f%%\n", classes[i], confidences[i] * 100));
-            }
-            confidence.setText(s.toString());
-             */
-            // Releases model resources if no longer used.
+
             model.close();
         } catch (IOException e) {
             // TODO Handle the exception
         }
-
     }
 
     @Override
